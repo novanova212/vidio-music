@@ -6,37 +6,38 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
-class Video extends Model
+class Song extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'title',
         'slug',
-        'description',
+        'artist',
+        'album',
         'file_path',
         'mime_type',
         'file_size',
         'duration',
-        'thumbnail_path',
-        'views',
+        'cover_path',
+        'plays',
         'downloads',
     ];
 
-    // URL streaming (dipakai <video> tag di frontend)
+    // URL streaming (dipakai <audio> tag di frontend)
     public function getStreamUrlAttribute(): string
     {
-        return route('api.videos.stream', $this->slug);
+        return route('api.songs.stream', $this->slug);
     }
 
     // URL download langsung (file asli, attachment)
     public function getDownloadUrlAttribute(): string
     {
-        return route('api.videos.download', $this->slug);
+        return route('api.songs.download', $this->slug);
     }
 
-    public function getThumbnailUrlAttribute(): ?string
+    public function getCoverUrlAttribute(): ?string
     {
-        return $this->thumbnail_path ? Storage::disk('public')->url($this->thumbnail_path) : null;
+        return $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null;
     }
 }
