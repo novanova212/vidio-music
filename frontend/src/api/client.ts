@@ -25,3 +25,24 @@ export const mediaApi = {
 }
 
 export default api
+
+// Upload video baru (multipart/form-data)
+export function uploadVideo(data: { title: string; description?: string; file: File; thumbnail?: File }) {
+  const form = new FormData()
+  form.append('title', data.title)
+  if (data.description) form.append('description', data.description)
+  form.append('file', data.file)
+  if (data.thumbnail) form.append('thumbnail', data.thumbnail)
+  return api.post('/videos', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+
+// Upload musik baru (multipart/form-data)
+export function uploadSong(data: { title: string; artist?: string; album?: string; file: File; cover?: File }) {
+  const form = new FormData()
+  form.append('title', data.title)
+  if (data.artist) form.append('artist', data.artist)
+  if (data.album) form.append('album', data.album)
+  form.append('file', data.file)
+  if (data.cover) form.append('cover', data.cover)
+  return api.post('/songs', form, { headers: { 'Content-Type': 'multipart/form-data' } })
+}

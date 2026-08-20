@@ -4,6 +4,7 @@ import VideoListPage from './pages/VideoListPage'
 import VideoDetailPage from './pages/VideoDetailPage'
 import MusicListPage from './pages/MusicListPage'
 import MusicDetailPage from './pages/MusicDetailPage'
+import UploadPage from './pages/UploadPage'
 import './styles/index.css'
 
 export default function App() {
@@ -14,6 +15,7 @@ export default function App() {
         <div className="nav-links">
           <Link to="/videos">Video</Link>
           <Link to="/music">Musik</Link>
+          <Link to="/upload">Upload</Link>
         </div>
       </nav>
 
@@ -24,6 +26,7 @@ export default function App() {
           <Route path="/videos/:slug" element={<VideoDetailPage />} />
           <Route path="/music" element={<MusicListPage />} />
           <Route path="/music/:slug" element={<MusicDetailPage />} />
+          <Route path="/upload" element={<UploadPage />} />
         </Routes>
       </main>
     </div>

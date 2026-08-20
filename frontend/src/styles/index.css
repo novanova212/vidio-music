@@ -68,3 +68,15 @@ body {
 .player-card { background: var(--card); border-radius: 10px; padding: 20px; }
 .player-info { margin-top: 16px; }
 .cover-art { width: 100%; max-width: 300px; border-radius: 8px; margin-bottom: 16px; }
+
+.upload-type-switch { display: flex; gap: 8px; margin: 16px 0; }
+.upload-form { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
+.upload-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
+.upload-form input[type="text"],
+.upload-form input:not([type="file"]) {
+  background: #12141a; border: 1px solid #2a2e38; border-radius: 6px;
+  padding: 8px 10px; color: var(--text); font-size: 14px;
+}
+.upload-form button { align-self: flex-start; }
+.upload-success { color: #2ecc71; }
+.upload-error { color: #e74c3c; }
