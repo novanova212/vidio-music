@@ -1,15 +1,13 @@
-# Konfigurasi build Railway (Nixpacks) untuk backend Laravel.
 [phases.setup]
 nixPkgs = ["php82", "php82Packages.composer"]
 
 [phases.install]
-cmds = ["composer install --no-dev --optimize-autoloader"]
-
-[phases.build]
 cmds = [
-  "php artisan config:cache",
-  "php artisan route:cache",
+  "mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs",
+  "chmod -R 777 bootstrap/cache storage",
+  "COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-scripts",
+  "COMPOSER_ALLOW_SUPERUSER=1 php artisan package:discover --ansi"
 ]
 
 [start]
-cmd = "php artisan migrate --force && php artisan storage:link || true && php artisan serve --host=0.0.0.0 --port=$PORT"
+cmd = "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"
