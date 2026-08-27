@@ -4,9 +4,7 @@ nixPkgs = ["php82", "php82Packages.composer"]
 [phases.install]
 cmds = [
   "mkdir -p bootstrap/cache storage/framework/cache storage/framework/sessions storage/framework/views storage/logs",
-  "chmod -R 777 bootstrap/cache storage",
-  "COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-scripts",
-  "COMPOSER_ALLOW_SUPERUSER=1 php artisan package:discover --ansi"
+  "composer install --no-dev --no-scripts --optimize-autoloader"
 ]
 
 [start]
