@@ -34,8 +34,14 @@ class DiscoverController extends Controller
             return $this->search($request);
         }
 
+        if ($request->boolean('refresh')) {
+            return response()->json(
+                $this->fetchFromYouTube($this->videoKeywords[array_rand($this->videoKeywords)])
+            );
+        }
+
         return response()->json(
-            \Illuminate\Support\Facades\Cache::remember('discover:videos:'.now()->format('YmdH'), 3600, function () {
+            Cache::remember('discover:videos:'.now()->format('YmdH'), 3600, function () {
                 return $this->fetchFromYouTube($this->videoKeywords[array_rand($this->videoKeywords)]);
             })
         );
