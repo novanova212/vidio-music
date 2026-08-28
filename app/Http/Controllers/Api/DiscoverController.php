@@ -27,10 +27,15 @@ class DiscoverController extends Controller
     ];
 
     // GET /api/discover/videos
-    public function videos(): JsonResponse
+    public function videos(\Illuminate\Http\Request $request): JsonResponse
     {
+        $q = trim((string) $request->query('q', ''));
+        if ($q !== '') {
+            return $this->search($request);
+        }
+
         return response()->json(
-            Cache::remember('discover:videos:'.now()->format('YmdH'), 3600, function () {
+            \Illuminate\Support\Facades\Cache::remember('discover:videos:'.now()->format('YmdH'), 3600, function () {
                 return $this->fetchFromYouTube($this->videoKeywords[array_rand($this->videoKeywords)]);
             })
         );
