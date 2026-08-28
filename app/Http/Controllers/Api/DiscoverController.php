@@ -46,6 +46,105 @@ class DiscoverController extends Controller
         );
     }
 
+        // GET /api/youtube/search?q=...
+    public function search(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        if ($q === '') {
+            return response()->json([]);
+        }
+
+        $apiKey = config('services.youtube.key');
+
+        if (!empty($apiKey)) {
+            $response = \Illuminate\Support\Facades\Http::timeout(12)->get(
+                'https://www.googleapis.com/youtube/v3/search',
+                [
+                    'part' => 'snippet',
+                    'type' => 'video',
+                    'maxResults' => 24,
+                    'q' => $q,
+                    'safeSearch' => 'strict',
+                    'regionCode' => 'ID',
+                    'key' => $apiKey,
+                ]
+            );
+
+            if ($response->successful()) {
+                $items = collect($response->json('items', []))
+                    ->map(function ($item) {
+                        $id = $item['id']['videoId'] ?? null;
+                        if (!$id) return null;
+                        return [
+                            'id' => 'yt-'.$id,
+                            'title' => $item['snippet']['title'] ?? '',
+                            'thumbnail_url' => 'https://img.youtube.com/vi/'.$id.'/hqdefault.jpg',
+                            'source_url' => 'https://www.youtube.com/watch?v='.$id,
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
+
+                if (count($items)) {
+                    return response()->json($items);
+                }
+            }
+        }
+
+        // Cadangan: tetap bisa cari tanpa API key
+        $yt = \Illuminate\Support\Facades\Http::timeout(12)
+            ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
+            ->post('https://www.youtube.com/youtubei/v1/search?prettyPrint=false', [
+                'context' => [
+                    'client' => [
+                        'clientName' => 'WEB',
+                        'clientVersion' => '2.20241201.00.00',
+                        'hl' => 'id',
+                        'gl' => 'ID',
+                        'safeSearch' => 'STRICT',
+                    ],
+                ],
+                'query' => $q,
+            ]);
+
+        $found = [];
+        if ($yt->ok()) {
+            $this->collectSearch($yt->json(), $found);
+        }
+
+        return response()->json(array_values($found));
+    }
+
+    private function collectSearch(mixed $node, array &$out): void
+    {
+        if (count($out) >= 24 || !is_array($node)) {
+            return;
+        }
+
+        if (isset($node['videoRenderer']['videoId'])) {
+            $id = $node['videoRenderer']['videoId'];
+            $title = '';
+            foreach ($node['videoRenderer']['title']['runs'] ?? [] as $run) {
+                $title .= $run['text'] ?? '';
+            }
+            if ($id && $title) {
+                $out[$id] = [
+                    'id' => 'yt-'.$id,
+                    'title' => $title,
+                    'thumbnail_url' => 'https://img.youtube.com/vi/'.$id.'/hqdefault.jpg',
+                    'source_url' => 'https://www.youtube.com/watch?v='.$id,
+                ];
+            }
+        }
+
+        foreach ($node as $child) {
+            if (is_array($child)) {
+                $this->collectSearch($child, $out);
+            }
+        }
+    }
+
     private function fetchFromYouTube(string $keyword, ?int $videoCategoryId = null): array
     {
         $apiKey = config('services.youtube.key');
