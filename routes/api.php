@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DiscoverController;
 use App\Http\Controllers\Api\MusicController;
 use App\Http\Controllers\Api\VideoController;
 use Illuminate\Support\Facades\Route;
@@ -12,7 +13,17 @@ use Illuminate\Support\Facades\Route;
 | LANGSUNG dari source_url (link ke sumber asli), tidak lewat server
 | kita, jadi lebih ringan. Endpoint /download tetap lewat backend
 | supaya jumlah unduhan bisa dihitung sebelum diarahkan ke sumbernya.
+|
+| Route 'discover/*' beda dari yang lain: itu BUKAN data dari database
+| kita, tapi diambil otomatis dari YouTube Data API tiap dipanggil
+| (di-cache 1 jam). Dipakai supaya beranda selalu ada isi walau belum
+| ada satupun video/musik yang ditambahkan manual.
 */
+
+Route::prefix('discover')->name('api.discover.')->group(function () {
+    Route::get('/videos', [DiscoverController::class, 'videos'])->name('videos');
+    Route::get('/music', [DiscoverController::class, 'music'])->name('music');
+});
 
 Route::prefix('videos')->name('api.videos.')->group(function () {
     Route::get('/', [VideoController::class, 'index'])->name('index');
