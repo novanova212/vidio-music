@@ -22,8 +22,9 @@ class DiscoverController extends Controller
     ];
 
     private array $musicKeywords = [
-        'lagu indonesia terbaru', 'musik pop indonesia', 'lagu viral tiktok',
-        'musik akustik', 'lagu hits 2026', 'musik indie indonesia',
+        'video lucu indonesia', 'minecraft', 'animasi anak', 'sepak bola',
+        'sains untuk anak', 'funnty moment', 'viral song', 'kartun',
+        'anime', 'vlog indonesia', 'komedi sketsa', 'olahraga',
     ];
 
     // GET /api/discover/videos
@@ -66,65 +67,95 @@ class DiscoverController extends Controller
         }
 
         $apiKey = config('services.youtube.key');
-
-        if (!empty($apiKey)) {
-            $response = \Illuminate\Support\Facades\Http::timeout(12)->get(
-                'https://www.googleapis.com/youtube/v3/search',
-                [
-                    'part' => 'snippet',
-                    'type' => 'video',
-                    'maxResults' => 24,
-                    'q' => $q,
-                    'safeSearch' => 'strict',
-                    'regionCode' => 'ID',
-                    'key' => $apiKey,
-                ]
-            );
-
-            if ($response->successful()) {
-                $items = collect($response->json('items', []))
-                    ->map(function ($item) {
-                        $id = $item['id']['videoId'] ?? null;
-                        if (!$id) return null;
-                        return [
-                            'id' => 'yt-'.$id,
-                            'title' => $item['snippet']['title'] ?? '',
-                            'thumbnail_url' => 'https://img.youtube.com/vi/'.$id.'/hqdefault.jpg',
-                            'source_url' => 'https://www.youtube.com/watch?v='.$id,
-                        ];
-                    })
-                    ->filter()
-                    ->values()
-                    ->all();
-
-                if (count($items)) {
-                    return response()->json($items);
-                }
-            }
+        if (empty($apiKey)) {
+            return response()->json([]);
         }
 
-        // Cadangan: tetap bisa cari tanpa API key
-        $yt = \Illuminate\Support\Facades\Http::timeout(12)
-            ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
-            ->post('https://www.youtube.com/youtubei/v1/search?prettyPrint=false', [
-                'context' => [
-                    'client' => [
-                        'clientName' => 'WEB',
-                        'clientVersion' => '2.20241201.00.00',
-                        'hl' => 'id',
-                        'gl' => 'ID',
-                        'safeSearch' => 'STRICT',
-                    ],
-                ],
-                'query' => $q,
-            ]);
+        $channelId = $this->findChannelId($apiKey, $q);
+        $fromChannel = $channelId ? $this->videosByChannel($apiKey, $channelId) : [];
+        $fromSearch = $this->searchVideos($apiKey, $q);
 
-        $found = [];
-        if ($yt->ok()) {
-            $this->collectSearch($yt->json(), $found);
+        $seen = [];
+        $merged = [];
+        foreach (array_merge($fromChannel, $fromSearch) as $item) {
+            if (isset($seen[$item['id']])) continue;
+            $seen[$item['id']] = true;
+            $merged[] = $item;
         }
 
-        return response()->json(array_values($found));
+        return response()->json($merged);
+    }
+
+    private function findChannelId(string $apiKey, string $q): ?string
+    {
+        if (preg_match('#youtube\.com/channel/(UC[\w-]+)#', $q, $m)) {
+            return $m[1];
+        }
+
+        $lookup = $q;
+        if (preg_match('#youtube\.com/@([^/?]+)#', $q, $m)) {
+            $lookup = '@'.$m[1];
+        } elseif (preg_match('#youtube\.com/(?:c|user)/([^/?]+)#', $q, $m)) {
+            $lookup = $m[1];
+        }
+
+        $res = Http::timeout(12)->get('https://www.googleapis.com/youtube/v3/search', [
+            'part' => 'snippet',
+            'type' => 'channel',
+            'maxResults' => 1,
+            'q' => $lookup,
+            'key' => $apiKey,
+        ]);
+
+        return $res->json('items.0.id.channelId');
+    }
+
+    private function videosByChannel(string $apiKey, string $channelId): array
+    {
+        $res = Http::timeout(12)->get('https://www.googleapis.com/youtube/v3/search', [
+            'part' => 'snippet',
+            'type' => 'video',
+            'channelId' => $channelId,
+            'order' => 'date',
+            'maxResults' => 24,
+            'safeSearch' => 'strict',
+            'key' => $apiKey,
+        ]);
+
+        return $this->mapSearchItems($res->json('items', []));
+    }
+
+    private function searchVideos(string $apiKey, string $q): array
+    {
+        $res = Http::timeout(12)->get('https://www.googleapis.com/youtube/v3/search', [
+            'part' => 'snippet',
+            'type' => 'video',
+            'maxResults' => 24,
+            'q' => $q,
+            'safeSearch' => 'strict',
+            'regionCode' => 'ID',
+            'key' => $apiKey,
+        ]);
+
+        return $this->mapSearchItems($res->json('items', []));
+    }
+
+    private function mapSearchItems(array $items): array
+    {
+        return collect($items)
+            ->map(function ($item) {
+                $id = $item['id']['videoId'] ?? null;
+                if (!$id) return null;
+                return [
+                    'id' => 'yt-'.$id,
+                    'title' => $item['snippet']['title'] ?? '',
+                    'thumbnail_url' => 'https://img.youtube.com/vi/'.$id.'/hqdefault.jpg',
+                    'source_url' => 'https://www.youtube.com/watch?v='.$id,
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
     }
 
     private function collectSearch(mixed $node, array &$out): void
