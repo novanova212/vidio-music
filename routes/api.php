@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\DiscoverController;
 use App\Http\Controllers\Api\MusicController;
 use App\Http\Controllers\Api\VideoController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\YoutubeSearchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,6 +32,7 @@ Route::prefix('videos')->name('api.videos.')->group(function () {
     Route::get('/{slug}', [VideoController::class, 'show'])->name('show');
     Route::get('/{slug}/download', [VideoController::class, 'download'])->name('download');
     Route::delete('/{slug}', [VideoController::class, 'destroy'])->name('destroy');
+    Route::get('/youtube/search', [YoutubeSearchController::class, 'search']);
 });
 
 Route::prefix('songs')->name('api.songs.')->group(function () {
