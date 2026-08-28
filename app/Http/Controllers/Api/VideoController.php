@@ -40,6 +40,14 @@ class VideoController extends Controller
         return redirect()->away($video->source_url);
     }
 
+    public function destroy(string $slug)
+    {
+        $video = Video::where('slug', $slug)->firstOrFail();
+        $video->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
     // POST /api/videos - tambah video baru CUKUP DENGAN LINK, tanpa upload file
     public function store(Request $request)
     {
@@ -50,6 +58,12 @@ class VideoController extends Controller
             'thumbnail_url' => 'nullable|url|max:2048',
             'mime_type' => 'nullable|string|max:100',
         ]);
+
+        if (empty($data['thumbnail_url'])) {
+            if (preg_match('/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([^?&]+)/', $data['source_url'], $m)) {
+                $data['thumbnail_url'] = 'https://img.youtube.com/vi/'.$m[1].'/hqdefault.jpg';
+            }
+        }
 
         $video = Video::create([
             'title' => $data['title'],

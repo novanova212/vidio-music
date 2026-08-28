@@ -19,6 +19,7 @@ Route::prefix('videos')->name('api.videos.')->group(function () {
     Route::post('/', [VideoController::class, 'store'])->name('store');
     Route::get('/{slug}', [VideoController::class, 'show'])->name('show');
     Route::get('/{slug}/download', [VideoController::class, 'download'])->name('download');
+    Route::delete('/{slug}', [VideoController::class, 'destroy'])->name('destroy');
 });
 
 Route::prefix('songs')->name('api.songs.')->group(function () {
@@ -26,4 +27,5 @@ Route::prefix('songs')->name('api.songs.')->group(function () {
     Route::post('/', [MusicController::class, 'store'])->name('store');
     Route::get('/{slug}', [MusicController::class, 'show'])->name('show');
     Route::get('/{slug}/download', [MusicController::class, 'download'])->name('download');
+    Route::delete('/{slug}', [MusicController::class, 'destroy'])->name('destroy');
 });
