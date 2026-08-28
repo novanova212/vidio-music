@@ -32,6 +32,7 @@ Route::prefix('videos')->name('api.videos.')->group(function () {
     Route::get('/{slug}', [VideoController::class, 'show'])->name('show');
     Route::get('/{slug}/download', [VideoController::class, 'download'])->name('download');
     Route::delete('/{slug}', [VideoController::class, 'destroy'])->name('destroy');
+    Route::get('/youtube/search', [DiscoverController::class, 'search']);
 });
 
 Route::prefix('songs')->name('api.songs.')->group(function () {
@@ -42,4 +43,3 @@ Route::prefix('songs')->name('api.songs.')->group(function () {
     Route::delete('/{slug}', [MusicController::class, 'destroy'])->name('destroy');
 });
 
-Route::get('/youtube/search', [DiscoverController::class, 'search']);
