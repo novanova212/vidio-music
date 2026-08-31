@@ -29,6 +29,8 @@ Route::prefix('songs')->name('api.songs.')->group(function () {
     Route::delete('/{slug}', [MusicController::class, 'destroy'])->name('destroy');
 });
 
+Route::get('/me/history', [EngagementController::class, 'history'])->name('api.me.history');
+
 Route::prefix('engage/{type}/{key}')->name('api.engage.')->group(function () {
     Route::get('/', [EngagementController::class, 'show'])->name('show');
     Route::post('/view', [EngagementController::class, 'view'])->name('view');
