@@ -14,11 +14,27 @@ class Song extends Model
         'slug',
         'artist',
         'album',
-        'source_url', // link ke musik asli (sudah di-hosting di tempat lain)
-        'cover_url',  // link gambar cover (opsional)
+        'source_url',
+        'cover_url',
         'mime_type',
         'plays',
+        'views',
         'downloads',
+        'likes',
+        'dislikes',
+    ];
+
+    protected $appends = [
+        'stream_url',
+        'download_url',
+    ];
+
+    protected $casts = [
+        'plays' => 'integer',
+        'views' => 'integer',
+        'downloads' => 'integer',
+        'likes' => 'integer',
+        'dislikes' => 'integer',
     ];
 
     public function getStreamUrlAttribute(): string
