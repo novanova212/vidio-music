@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DiscoverController;
+use App\Http\Controllers\Api\EngagementController;
 use App\Http\Controllers\Api\MusicController;
 use App\Http\Controllers\Api\VideoController;
 use Illuminate\Support\Facades\Route;
@@ -26,4 +27,12 @@ Route::prefix('songs')->name('api.songs.')->group(function () {
     Route::get('/{slug}', [MusicController::class, 'show'])->name('show');
     Route::get('/{slug}/download', [MusicController::class, 'download'])->name('download');
     Route::delete('/{slug}', [MusicController::class, 'destroy'])->name('destroy');
+});
+
+Route::prefix('engage/{type}/{key}')->name('api.engage.')->group(function () {
+    Route::get('/', [EngagementController::class, 'show'])->name('show');
+    Route::post('/view', [EngagementController::class, 'view'])->name('view');
+    Route::post('/react', [EngagementController::class, 'react'])->name('react');
+    Route::get('/comments', [EngagementController::class, 'comments'])->name('comments');
+    Route::post('/comments', [EngagementController::class, 'storeComment'])->name('comments.store');
 });
