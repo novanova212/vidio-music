@@ -9,6 +9,7 @@ class MediaComment extends Model
     protected $fillable = [
         'target_type',
         'target_key',
+        'guest_id',
         'author_name',
         'body',
     ];
