@@ -52,9 +52,25 @@ class EngagementController extends Controller
             'body' => 'required|string|max:500',
         ]);
 
-        $comment = $this->engagement->addComment($type, $key, $data['author_name'], $data['body']);
+        $comment = $this->engagement->addComment(
+            $type,
+            $key,
+            $data['author_name'],
+            $data['body'],
+            $this->guestId($request)
+        );
 
         return response()->json($comment, 201);
+    }
+
+    public function history(Request $request): JsonResponse
+    {
+        $guestId = $this->guestId($request, required: true);
+        $name = trim((string) $request->query('name', ''));
+
+        return response()->json(
+            $this->engagement->history($guestId, $name !== '' ? $name : null)
+        );
     }
 
     private function guestId(Request $request, bool $required = false): ?string
