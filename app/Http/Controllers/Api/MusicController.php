@@ -7,10 +7,8 @@ use App\Models\Song;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
-// Sama seperti VideoController: tidak menyimpan file musik, cuma link.
 class MusicController extends Controller
 {
-    // GET /api/songs - daftar semua musik
     public function index()
     {
         $songs = Song::latest()->paginate(20);
@@ -18,16 +16,15 @@ class MusicController extends Controller
         return response()->json($songs);
     }
 
-    // GET /api/songs/{slug} - detail satu musik (sekaligus tambah hitungan plays)
     public function show(string $slug)
     {
         $song = Song::where('slug', $slug)->firstOrFail();
         $song->increment('plays');
+        $song->increment('views');
 
-        return response()->json($song);
+        return response()->json($song->fresh());
     }
 
-    // GET /api/songs/{slug}/download - hitung unduhan, lalu arahkan ke source_url
     public function download(string $slug)
     {
         $song = Song::where('slug', $slug)->firstOrFail();
@@ -36,7 +33,14 @@ class MusicController extends Controller
         return redirect()->away($song->source_url);
     }
 
-    // POST /api/songs - tambah musik baru CUKUP DENGAN LINK, tanpa upload file
+    public function destroy(string $slug)
+    {
+        $song = Song::where('slug', $slug)->firstOrFail();
+        $song->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
