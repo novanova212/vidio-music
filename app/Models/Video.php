@@ -13,22 +13,32 @@ class Video extends Model
         'title',
         'slug',
         'description',
-        'source_url',   // link ke video asli (sudah di-hosting di tempat lain)
-        'thumbnail_url', // link gambar thumbnail (opsional, juga dari luar)
+        'source_url',
+        'thumbnail_url',
         'mime_type',
         'views',
         'downloads',
+        'likes',
+        'dislikes',
     ];
 
-    // Dipakai frontend untuk tag <video src="...">. Karena file-nya
-    // memang tidak disimpan di server ini, langsung arahkan ke source_url.
+    protected $appends = [
+        'stream_url',
+        'download_url',
+    ];
+
+    protected $casts = [
+        'views' => 'integer',
+        'downloads' => 'integer',
+        'likes' => 'integer',
+        'dislikes' => 'integer',
+    ];
+
     public function getStreamUrlAttribute(): string
     {
         return $this->source_url;
     }
 
-    // Tetap lewat backend (bukan langsung ke source_url) supaya jumlah
-    // unduhan bisa dihitung, baru diarahkan (redirect) ke sumber aslinya.
     public function getDownloadUrlAttribute(): string
     {
         return route('api.videos.download', $this->slug);
