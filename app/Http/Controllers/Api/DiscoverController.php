@@ -11,14 +11,15 @@ use Illuminate\Support\Facades\Http;
 class DiscoverController extends Controller
 {
     private array $videoKeywords = [
-        'video lucu indonesia', 'minecraft', 'animasi anak', 'sepak bola',
-        'sains untuk anak', 'hewan lucu', 'kartun', 'vlog indonesia',
-        'komedi sketsa', 'olahraga',
+        'desk setup aesthetic', 'laptop setup tour', 'coding javascript',
+        'tech review indonesia', 'dj set edm official', 'cinematic broll',
+        'photography night city', 'basketball highlights', 'study with me',
+        'guitar cover acoustic',
     ];
 
     private array $musicKeywords = [
-        'lagu indonesia terbaru', 'musik pop indonesia', 'lagu viral',
-        'musik akustik', 'lagu hits', 'musik anak',
+        'edm remix official', 'dj remix indonesia', 'lofi beats',
+        'lagu indonesia terbaru', 'musik pop indonesia', 'electronic dance music',
     ];
 
     public function videos(Request $request): JsonResponse
