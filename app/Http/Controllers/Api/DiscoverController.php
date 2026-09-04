@@ -22,8 +22,19 @@ class DiscoverController extends Controller
         'electronic dance music', 'top hits', 'pop indonesia', 'chill hits',
     ];
 
-    public function music(): JsonResponse
+    public function music(Request $request): JsonResponse
     {
+        $q = trim((string) $request->query('q', ''));
+        if ($q !== '') {
+            return response()->json($this->fetchFromSpotify($q, 20));
+        }
+
+        if ($request->boolean('refresh')) {
+            return response()->json(
+                $this->fetchFromSpotify($this->musicKeywords[array_rand($this->musicKeywords)], 12)
+            );
+        }
+
         return response()->json(
             Cache::remember('discover:music:spotify:'.now()->format('YmdH'), 3600, function () {
                 return $this->fetchFromSpotify($this->musicKeywords[array_rand($this->musicKeywords)], 12);
@@ -77,6 +88,7 @@ class DiscoverController extends Controller
                     'channel_title' => $artists ?: 'Tidak diketahui',
                     'thumbnail_url' => $cover,
                     'watch_url' => $track['external_urls']['spotify'] ?? "https://open.spotify.com/track/{$id}",
+                    'duration_ms' => $track['duration_ms'] ?? null,
                 ];
             })
             ->filter()
