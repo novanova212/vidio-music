@@ -18,9 +18,91 @@ class DiscoverController extends Controller
     ];
 
     private array $musicKeywords = [
-        'edm remix official', 'dj remix indonesia', 'lofi beats',
-        'lagu indonesia terbaru', 'musik pop indonesia', 'electronic dance music',
+        'edm remix', 'lofi beats', 'lagu indonesia terbaru', 'musik pop indonesia',
+        'electronic dance music', 'top hits', 'pop indonesia', 'chill hits',
     ];
+
+    public function music(): JsonResponse
+    {
+        return response()->json(
+            Cache::remember('discover:music:spotify:'.now()->format('YmdH'), 3600, function () {
+                return $this->fetchFromSpotify($this->musicKeywords[array_rand($this->musicKeywords)], 12);
+            })
+        );
+    }
+
+    /**
+     * Ambil daftar lagu langsung dari Spotify Search API (Client Credentials Flow).
+     * Ini GRATIS — cuma butuh daftar app di https://developer.spotify.com/dashboard
+     * lalu isi SPOTIFY_CLIENT_ID & SPOTIFY_CLIENT_SECRET di .env. Tidak ada file
+     * musik yang diunduh/disimpan di server maupun perangkat kita — hanya metadata
+     * (judul, artis, cover, link) yang ditampilkan, persis seperti cara video YouTube
+     * ditampilkan lewat iframe di atas.
+     */
+    private function fetchFromSpotify(string $keyword, int $limit = 12): array
+    {
+        $token = $this->spotifyToken();
+        if (! $token) {
+            return [];
+        }
+
+        $response = Http::withToken($token)->timeout(12)->get('https://api.spotify.com/v1/search', [
+            'q' => $keyword,
+            'type' => 'track',
+            'market' => 'ID',
+            'limit' => $limit,
+        ]);
+
+        if (! $response->successful()) {
+            return [];
+        }
+
+        return collect($response->json('tracks.items', []))
+            ->map(function ($track) {
+                $id = $track['id'] ?? null;
+                if (! $id) {
+                    return null;
+                }
+
+                $artists = collect($track['artists'] ?? [])->pluck('name')->filter()->implode(', ');
+                $cover = $track['album']['images'][1]['url']
+                    ?? $track['album']['images'][0]['url']
+                    ?? null;
+
+                return [
+                    // Nama field disamakan dengan format discover video (youtube_id,
+                    // channel_title, watch_url) supaya frontend tidak perlu bentuk baru.
+                    'youtube_id' => $id,
+                    'title' => $track['name'] ?? 'Tanpa judul',
+                    'channel_title' => $artists ?: 'Tidak diketahui',
+                    'thumbnail_url' => $cover,
+                    'watch_url' => $track['external_urls']['spotify'] ?? "https://open.spotify.com/track/{$id}",
+                ];
+            })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    private function spotifyToken(): ?string
+    {
+        $clientId = env('SPOTIFY_CLIENT_ID');
+        $clientSecret = env('SPOTIFY_CLIENT_SECRET');
+        if (empty($clientId) || empty($clientSecret)) {
+            return null;
+        }
+
+        return Cache::remember('spotify:client_credentials_token', 3300, function () use ($clientId, $clientSecret) {
+            $res = Http::asForm()
+                ->withBasicAuth($clientId, $clientSecret)
+                ->timeout(10)
+                ->post('https://accounts.spotify.com/api/token', [
+                    'grant_type' => 'client_credentials',
+                ]);
+
+            return $res->successful() ? $res->json('access_token') : null;
+        });
+    }
 
     public function videos(Request $request): JsonResponse
     {
@@ -38,15 +120,6 @@ class DiscoverController extends Controller
         return response()->json(
             Cache::remember('discover:videos:'.now()->format('YmdH'), 3600, function () {
                 return $this->fetchFromYouTube($this->videoKeywords[array_rand($this->videoKeywords)]);
-            })
-        );
-    }
-
-    public function music(): JsonResponse
-    {
-        return response()->json(
-            Cache::remember('discover:music:'.now()->format('YmdH'), 3600, function () {
-                return $this->fetchFromYouTube($this->musicKeywords[array_rand($this->musicKeywords)], 10);
             })
         );
     }
