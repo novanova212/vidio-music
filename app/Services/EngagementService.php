@@ -12,7 +12,7 @@ use Illuminate\Validation\ValidationException;
 
 class EngagementService
 {
-    public const TYPES = ['video', 'song', 'youtube'];
+    public const TYPES = ['video', 'song', 'youtube', 'spotify'];
 
     public function resolve(string $type, string $key): array
     {
@@ -35,6 +35,16 @@ class EngagementService
             $item = Song::where('slug', $key)->firstOrFail();
 
             return [$type, $item->slug, $item];
+        }
+
+        if ($type === 'spotify') {
+            if (! preg_match('/^[A-Za-z0-9]{10,30}$/', $key)) {
+                throw ValidationException::withMessages([
+                    'key' => 'ID musik tidak valid.',
+                ]);
+            }
+
+            return ['spotify', $key, null];
         }
 
         $key = preg_replace('/^yt-/', '', $key);
